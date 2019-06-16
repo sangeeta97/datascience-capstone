@@ -1,0 +1,112 @@
+---
+title: "Statistical inference with the GSS data"
+output: 
+  html_document: 
+    fig_height: 4
+    highlight: pygments
+    theme: spacelab
+---
+
+## Setup
+
+### Load packages
+
+```{r load-packages, message = FALSE}
+library(ggplot2)
+library(dplyr)
+library(statsr)
+```
+
+### Load data
+
+Make sure your data and R Markdown files are in the same directory. When loaded
+your data file will be called `gss`. Delete this note when before you submit 
+your work. 
+
+```{r load-data}
+load("gss.Rdata")
+```
+
+
+
+* * *
+
+## Part 1: Data
+Since 1972, the General Social Survey (GSS) has been monitoring societal change and studying the growing complexity of American society.The random sampling was used. The samples were collected from different US states randomly. This study results from this data have generabizability to the US population. However there is no causality can be inferred as there is no control group. There is no random assignment has been done. This is an obsevation study and not experimental study. 
+* * *
+
+## Part 2: Research question
+This study collects information about various societal change from 1972 to 2012. This would be interesting to know about the correlation of change in preference for higher education among US population from 1972 to 2012.The rising competition in society may have some impact.  
+```
+
+```
+
+
+* * *
+
+## Part 3: Exploratory data analysis
+
+NOTE: Insert code chunks as needed by clicking on the "Insert a new code chunk" 
+button (green button with orange arrow) above. Make sure that your code is visible
+in the project you submit. Delete this note when before you submit your work.
+```{r}
+ED<- gss%>% select(year, degree)
+ED<- na.omit(ED)
+tb<- table(ED$year, ED$degree)
+margin.table(tb, 2)
+round(prop.table(tb,1),2)
+gg<- ggplot(ED, aes(year, fill=degree)) + geom_bar(position="fill")
+gg<- gg+ xlab("year")+ ylab("Frequency")+ ggtitle("Trend in Degree by year")
+gg
+# This plot shows that there is consistent increase in the frequency of Junior college, Bachelor and Graduate degree from 1972 to 2012. There is also considerable uniform decrease in the frequency of Lt High School from 1972 to 2012. 
+```
+
+* * *
+
+## Part 4: Inference
+Hypothesis: Is self employed status affects work satifaction level?
+H0 = satjob and wrkslf status are independent and satjob status do not vary with wrkslf status. 
+HA = satjob and wrkslf status are dependent and satjob status do vary with wrkslf status. 
+
+```{r}
+library(dplyr)
+IN<- gss%>% select(wrkslf, satjob)
+IN<- na.omit(IN)
+gplot<- ggplot(IN, aes(wrkslf, fill=satjob)) + geom_bar(position="fill")
+tb<- table(IN$wrkslf, IN$satjob)
+tb
+margin.table(tb, 1)
+margin.table(tb, 2)
+round(prop.table(tb,1),2)
+
+
+```
+Check condition: The samples were collected in gss study randomly from the US and each sample has its unique caseid.
+The sample has n= 57061 which is less than 10% of the US population
+The contigency table denoted by tb has more than 5 counts for each cell. 
+State the method to be used why and How: This inference study has two catgorical varible and one of which has more than two levels.Thus Chi square independence test can be used. 
+In this inference, the hypothesis is that these two categorical varibles are independent to each other. 
+The expected contigency table given null hypothesis is true is different from the observed sample contigency table.  
+Perform Inference:
+```{r}
+library(MASS)
+chisq.test(tb)
+chisq.test(tb)$expected
+# The expected contigency table is different than the sample contigency table.
+# confidence interval for the proportion of US population self employed using point estimate of sample(gss) proportion.
+n = length(IN$wrkslf)
+k = sum(IN$wrkslf == "Self-Employed") 
+pbar = k/n
+SE = sqrt(pbar???(1???pbar)/n)
+E = qnorm(.975)???SE
+E
+pbar + c(???E, E) 
+
+
+```
+Interpret the Result:
+The Chi square value is high and P value is less than 0.05 which shows the correlation or dependence between work status and job satifaction level. 
+At 95% confidence level, between 11.56% and 12.20% of the US population are self employed, and the margin of error is 0.3%. 
+
+
+
