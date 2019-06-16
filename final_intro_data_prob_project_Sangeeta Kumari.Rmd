@@ -1,0 +1,84 @@
+---
+title: "Exploring the BRFSS data"
+output: 
+  html_document: 
+    fig_height: 4
+    highlight: pygments
+    theme: spacelab
+---
+
+## Setup
+
+### Load packages
+
+```{r load-packages, message = FALSE}
+library(ggplot2)
+library(dplyr)
+```
+
+### Load data
+
+```{r load-data}
+load("brfss2013.RData")
+```
+
+* * *
+
+## Part 1: Data
+The BRFSS is a collaborative project which collected data for Health characteristics pertain to the non-institutionalized adult population, aged 18 years or older, who reside in the US. This is an observational study. This study does random sampling but not random assignment. Thus the results from this study generalizable but not causal. The results can only show correlation among different variables. 
+
+* * *
+
+## Part 2: Research questions
+
+**Research quesion 1:**
+The different income level is reported for all the samples along with their general health status.It would be interesting to know if income level is affecting the health status of individuals. The higher income level can lead to better access to healthcare facilities. 
+
+**Research quesion 2:**
+The number of sleeping hours is collected from each studied sample and it would be intesting to see if good sleep leads to good health. Also the distribution of sleep and health across all the states. The plot below shows sleep hours on the Y axis. The sleep for 5-10 hours shows good health for samples across all the states. However the pattern of sleep hours is not varying with different states. 
+
+**Research quesion 3:**
+The BMI is very important factor for the overall health status of individual. The correlation of health and BMI across the all states will help to understand about the obesity status of different states.The plot shows that very few people are underweight and almost 60% people across all the states are either overweight or obese. The distribution of BMI status is not very different across states. 
+
+* * *
+
+## Part 3: Exploratory data analysis
+
+**Research quesion 1:**
+
+```{r}
+newdata<- brfss2013 %>% select(X_bmi5cat, X_smoker3, X_pacat1, X_incomg, X_state, X_educag, sleptim1, X_rfhlth, genhlth)
+newdata<- na.omit(newdata)
+newdata %>% group_by(X_state) %>% summarise(count = n())
+str(newdata$X_state)
+str(newdata$X_bmi5cat)
+str(newdata$X_pacat1)
+str(newdata$X_incomg)
+table<- table(newdata$X_incomg,newdata$X_rfhlth)
+table1<-prop.table(table)
+mosaicplot(table1, main= "correlation of income with health",color= TRUE)
+```
+
+**Research quesion 2:**
+
+```{r}
+P1<- ggplot(newdata, aes(x = X_state, y= sleptim1))
+p2<- P1+geom_point(aes(color= factor(X_rfhlth)))
+p3<- p2+scale_x_discrete(labels = c("Alabama"= "AL", "Alaska" = "AK", "Arizona" ="AZ", "Arkansas" = "AR", "California" = "CA","Colorado"= "CO", "Connecticut"= "CT","Delaware" ="DE", "District of Columbia" ="DC", "Florida"= "FL",  "Georgia"= "GA","Hawaii" = "HI", "Idaho"= "ID","Illinois"= "IL", "Indiana" ="IN", "Iowa" ="IA","Kansas"= "KS","Kentucky"= "KY", "Louisiana" ="LA", "Maine"= "ME", "Maryland"= "MD","Massachusetts"= "MA","Michigan" ="MI","Minnesota"= "MN", "Mississippi"= "MS","Missouri"= "MO","Montana"= "MT","Nebraska" ="NE","Nevada" ="NV","New Hampshire"= "NH", "New Jersey" ="NJ","New Mexico"="NM","New York"="NY", "North Carolina"="NC","North Dakota"= "ND","Ohio"= "OH","Oklahoma"= "OK","oregon"= "OR", "Pennsylvania"= "PA", "Rhode Island"= "RI","South Carolina"= "SC","South Dakota" ="SD","Tennessee" ="TN", "Texas" ="TX", "Utah" ="UT", "Vermont" ="VT","Virginia"="VA","Washington" ="WA","West Virginia"="WV","Wisconsin"="WI","Wyoming"="WY","Puerto Rico"="PR","Guam"="GU"))
+p4<- p3+scale_color_discrete(name= "health status", labels= c("Good or Better Health"= "Good health", "Fair or Poor Health"="poor health"))
+p5<- p4+ xlab("state")+ylab("sleep hour")+ ggtitle("distribution of sleep hr.with health by state")
+p5
+
+```
+
+**Research quesion 3:**
+
+```{r}
+p11<- newdata%>% ggplot()+aes(x= X_state, fill=X_bmi5cat)+ geom_bar(position='fill')
+p16<- p11+scale_x_discrete(labels = c("Alabama"= "AL", "Alaska" = "AK", "Arizona" ="AZ", "Arkansas" = "AR", "California" = "CA","Colorado"= "CO", "Connecticut"= "CT","Delaware" ="DE", "District of Columbia" ="DC", "Florida"= "FL",  "Georgia"= "GA","Hawaii" = "HI", "Idaho"= "ID","Illinois"= "IL", "Indiana" ="IN", "Iowa" ="IA","Kansas"= "KS","Kentucky"= "KY", "Louisiana" ="LA", "Maine"= "ME", "Maryland"= "MD","Massachusetts"= "MA","Michigan" ="MI","Minnesota"= "MN", "Mississippi"= "MS","Missouri"= "MO","Montana"= "MT","Nebraska" ="NE","Nevada" ="NV","New Hampshire"= "NH", "New Jersey" ="NJ","New Mexico"="NM","New York"="NY", "North Carolina"="NC","North Dakota"= "ND","Ohio"= "OH","Oklahoma"= "OK","oregon"= "OR", "Pennsylvania"= "PA", "Rhode Island"= "RI","South Carolina"= "SC","South Dakota" ="SD","Tennessee" ="TN", "Texas" ="TX", "Utah" ="UT", "Vermont" ="VT","Virginia"="VA","Washington" ="WA","West Virginia"="WV","Wisconsin"="WI","Wyoming"="WY","Puerto Rico"="PR","Guam"="GU"))
+p17<- p16+scale_fill_discrete(name= "BMI", labels= c("Underweight"= "Under", "Normal weight"="Normal", "Overweight"="Over", "Obese"="OB"))
+p18<- p17+ xlab("state")+ylab("Frequency")+ ggtitle("distribution of BMI by state")
+p18
+
+```
+
