@@ -1,0 +1,113 @@
+---
+title: "Modeling and prediction for movies"
+output: 
+  html_document: 
+    fig_height: 4
+    highlight: pygments
+    theme: spacelab
+---
+Setup
+
+Load packages
+
+```{r load-packages, message = FALSE}
+library(ggplot2)
+library(dplyr)
+library(statsr)
+```
+
+Load data
+
+Make sure your data and R Markdown files are in the same directory. When loaded
+your data file will be called `movies`. Delete this note when before you submit 
+your work. 
+
+```{r load-data}
+load("movies.Rdata")
+```
+
+
+
+* * *
+
+Part 1: Data
+The data set is comprised of 651 randomly sampled movies produced and released before 2016. Thus the inferences made by the analysis of data is generalizable. The data collected is observational data thus there is no random assignment have been done. The results will show only correlation between variablesand not causal. 
+
+* * *
+
+Part 2: Research question
+The different people generally likes different genre of movies. It would be interesting to study the correlation between the overall popularity of the movie(audience score) and genre.
+
+
+* * *
+
+Part 3: Exploratory data analysis
+```{r}
+new<- movies %>% select(mpaa_rating, genre, title_type, runtime, imdb_num_votes,imdb_rating, critics_rating, studio, best_pic_nom, critics_score, audience_rating, audience_score, best_pic_win,top200_box)
+P1<- ggplot(new, aes(x = genre, y= audience_score))
+P1<- P1+scale_x_discrete(labels= c("Animation"="ANMA","Art House & International"= "Art-I", "Comedy", "Documentary"="DC","Drama", "Horror", "Musical & Performing Arts"= "Mus-PA", "Mystery & Suspense"= "MS","Other"="OT","Science Fiction & Fantasy"= "SF", "Action & Adventure" ="AA" ))
+P1<- P1+geom_point(na.rm= TRUE)
+#Animation=ANMA, Art House & International= Art-I, Documentary =DC, Musical & Performing Arts= Mus-PA, Mystery & Suspense= MS, Science Fiction & Fantasy= SF
+library(MASS)
+tb<- table(new$genre, new$audience_rating)
+tb
+chisq.test(tb)
+new<- na.omit(new)
+```
+
+* * *
+
+## Part 4: Modeling
+
+NOTE: Insert code chunks as needed by clicking on the "Insert a new code chunk" 
+button above. Make sure that your code is visible in the project you submit. 
+Delete this note when before you submit your work.
+```{r}
+fullmodel <-lm(audience_score ~., data=new) 
+deviance(fullmodel)
+#backward elimination based on P values
+full=lm(audience_score~., data=new)
+drop1(full, test = "F")
+drop1(update(full, ~ . -runtime), test = "F")
+drop1(update(full, ~ . -runtime-studio), test = "F")
+drop1(update(full, ~ . -runtime-studio-mpaa_rating), test = "F")
+drop1(update(full, ~ . -runtime-studio-mpaa_rating-top200_box), test = "F")
+drop1(update(full, ~ . -runtime-studio-mpaa_rating-top200_box-title_type), test = "F")
+drop1(update(full, ~ . -runtime-studio-mpaa_rating-top200_box-title_type-best_pic_win), test = "F")
+drop1(update(full, ~ . -mpaa_rating), test = "F")
+drop1(update(full, ~ . -mpaa_rating-critics_score), test = "F")
+drop1(update(full, ~ . -mpaa_rating-critics_score-top200_box), test = "F")
+drop1(update(full, ~ . -mpaa_rating-critics_score-top200_box-imdb_num_votes), test = "F")
+drop1(update(full, ~ . -mpaa_rating-critics_score-top200_box-imdb_num_votes-best_pic_win), test = "F")
+drop1(update(full, ~ . -mpaa_rating-critics_score-top200_box-imdb_num_votes-best_pic_win-critics_rating), test = "F")
+drop1(update(full, ~ . -mpaa_rating-critics_score-top200_box-imdb_num_votes-best_pic_win-critics_rating-best_pic_nom), test = "F")
+summary(update(full, ~ . -mpaa_rating-critics_score-top200_box-imdb_num_votes-best_pic_win-critics_rating-best_pic_nom), test = "F")
+summary(full)
+reduced.model<- drop1(update(full, ~ . -mpaa_rating-critics_score-top200_box-imdb_num_votes-best_pic_win-critics_rating-best_pic_nom), test = "F")
+reduced.model<- lm(audience_score~ genre+imdb_rating+audience_rating, data= new)
+```
+
+* * *
+
+## Part 5: Prediction
+
+NOTE: Insert code chunks as needed by clicking on the "Insert a new code chunk" 
+button above. Make sure that your code is visible in the project you submit. 
+Delete this note when before you submit your work.
+```{r}
+attach(new)
+newmpaa_rating <- data.frame(genre = "Comedy", imdb_rating = 7)
+predicted<- predict(reduced.model, newmpaa_rating, interval = "prediction", level = 0.95)
+actual<- predict(reduced.model, newmpaa_rating, interval = "confidence", level = 0.95)
+summary(predicted)
+summary(actual)
+```
+
+* * *
+
+## Part 6: Conclusion
+```{r}
+summary(full)$adj.r.squared
+summary(reduced.model)$adj.r.squared
+```
+
